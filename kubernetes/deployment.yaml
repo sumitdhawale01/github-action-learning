@@ -19,7 +19,7 @@ spec:
         - name: eks-app
           # Replace <ACCOUNT_ID> with your AWS account ID, or copy the
           # ecr_repository_url terraform output. Set the tag from your build/push.
-          image: <ACCOUNT_ID>.dkr.ecr.ap-south-1.amazonaws.com/github-action-eks-app:latest
+          image: __IMAGE__
           ports:
             - containerPort: 3000
           resources:
