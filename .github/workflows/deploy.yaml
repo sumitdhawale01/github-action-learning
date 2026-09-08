@@ -1,0 +1,54 @@
+name: CD - Deploy to EKS
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'kubernetes/**'
+      - '.github/workflows/deploy.yaml'
+  workflow_run:
+    workflows: ["CI - Test, Build & Push to ECR"]
+    types: [completed]
+    branches: [main]
+
+env:
+  AWS_REGION: ap-south-1
+  ECR_REPOSITORY: github-action-eks-app
+  EKS_CLUSTER_NAME: github-action-eks-cluster
+  K8S_NAMESPACE: eks-app
+
+jobs:
+  deploy:
+    if: ${{ github.event_name == 'push' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name ${{ env.EKS_CLUSTER_NAME }}
+
+      - name: Get latest image tag
+        id: image
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          echo "url=$ACCOUNT_ID.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${{ github.sha }}" >> "$GITHUB_OUTPUT"
+
+      - name: Substitute image into deployment manifest
+        run: sed -i "s|__IMAGE__|${{ steps.image.outputs.url }}|g" kubernetes/deployment.yaml
+
+      - name: Apply Kubernetes manifests
+        run: |
+          kubectl apply -f kubernetes/namespace.yaml
+          kubectl apply -f kubernetes/deployment.yaml
+          kubectl apply -f kubernetes/service.yaml
+          kubectl apply -f kubernetes/ingress.yaml
+
+      - name: Wait for rollout to finish
+        run: kubectl rollout status deployment/eks-app -n ${{ env.K8S_NAMESPACE }} --timeout=180s
