@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eks-app
+  namespace: eks-app
+  labels:
+    app: eks-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: eks-app
+  template:
+    metadata:
+      labels:
+        app: eks-app
+    spec:
+      containers:
+        - name: eks-app
+          # Replace <ACCOUNT_ID> with your AWS account ID, or copy the
+          # ecr_repository_url terraform output. Set the tag from your build/push.
+          image: <ACCOUNT_ID>.dkr.ecr.ap-south-1.amazonaws.com/github-action-eks-app:latest
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 20

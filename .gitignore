@@ -1,0 +1,12 @@
+node_modules/
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+.aws
+.cache
+.config
+.copilot
+.kube
+.terraform.d
+.vscode-server
