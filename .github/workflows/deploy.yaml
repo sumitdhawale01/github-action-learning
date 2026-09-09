@@ -38,8 +38,8 @@ jobs:
         id: image
         run: |
           ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-          echo "url=$ACCOUNT_ID.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:latest" >> "$GITHUB_OUTPUT"
-
+          echo "url=$ACCOUNT_ID.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${{ github.sha }}" >> "$GITHUB_OUTPUT"
+      
       - name: Substitute image into deployment manifest
         run: sed -i "s|__IMAGE__|${{ steps.image.outputs.url }}|g" kubernetes/deployment.yaml
 
