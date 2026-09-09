@@ -40,7 +40,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Simple API endpoint the frontend calls
 app.get('/api/message', (req, res) => {
   res.json({
-    message: 'Hello from your EKS-deployed app!',
+    message: 'Hello from your EKS-deployed app - v2!',
     hostname: require('os').hostname(), // useful to see load-balancing across pods
     timestamp: new Date().toISOString(),
   });
